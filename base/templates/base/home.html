@@ -1,0 +1,45 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<style>
+    .home-container {
+        display: grid;
+        grid-template-columns: 1fr 3fr;
+    }
+</style>
+
+<div class="home-container">
+    <div>
+        <h3>Browse Topics</h3>
+        <hr>
+
+        <div>
+            <a href="{% url 'home' %}">All</a>
+        </div>
+
+        {% for topic in topics %}
+            <div>
+                <a href="{% url 'home' %}?q={{ topic.name }}">{{ topic.name }}</a>
+            </div>
+        {% endfor %}
+    </div>
+    <div>
+        <h5>{{ project_count }} projects available</h5>
+        <a href="{% url 'create-project' %}">Create Project</a>
+        <div>
+            {% for project in projects %}
+                <div>
+                    <a href="{% url 'update-project' project.id %}">Edit</a>
+                    <a href="{% url 'delete-project' project.id %}">Delete</a>
+                    <span>@{{ project.host.username }}</span>
+                    <h5>{{project.id}} -- <a href="{% url 'project' project.id %}">{{project.name}}</a></h5>
+                    <small>{{ project.topic.name }}</small>
+                    <hr>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{%endblock content %}
