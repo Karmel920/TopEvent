@@ -1,7 +1,57 @@
 from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from .models import Project, Topic
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import UserCreationForm
+from .models import Project, Topic, Message
 from .forms import ProjectForm
+
+
+def login_view(request):
+    page = 'login'
+
+    if request.user.is_authenticated:
+        return redirect('home')
+
+    if request.method == 'POST':
+        username = request.POST.get('username').lower()
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, 'Username OR password does not exist!')
+
+    context = {'page': page}
+    return render(request, 'base/login_register.html', context)
+
+
+def logout_user(request):
+    logout(request)
+    return redirect('home')
+
+
+def register_view(request):
+    form = UserCreationForm()
+
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.username = user.username.lower()
+            user.save()
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, 'Something went wrong during registration')
+
+    context = {'form': form}
+    return render(request, 'base/login_register.html', context)
 
 
 def home(request):
@@ -20,10 +70,23 @@ def home(request):
 
 def project(request, pk):
     project = Project.objects.get(id=pk)
-    context = {'project': project}
+    comments = project.message_set.all().order_by('-created')
+    participants = project.participants.all()
+
+    if request.method == 'POST':
+        comment = Message.objects.create(
+            user=request.user,
+            project=project,
+            body=request.POST.get('body')
+        )
+        project.participants.add(request.user)
+        return redirect('project', pk=project.id)
+
+    context = {'project': project, 'comments': comments, 'participants': participants}
     return render(request, 'base/project.html', context)
 
 
+@login_required(login_url='/login')
 def create_project(request):
     form = ProjectForm()
 
@@ -37,6 +100,7 @@ def create_project(request):
     return render(request, 'base/project_form.html', context)
 
 
+@login_required(login_url='/login')
 def update_project(request, pk):
     project = Project.objects.get(id=pk)
     form = ProjectForm(instance=project)
@@ -51,10 +115,25 @@ def update_project(request, pk):
     return render(request, 'base/project_form.html', context)
 
 
+@login_required(login_url='/login')
 def delete_project(request, pk):
     project = Project.objects.get(id=pk)
+
     if request.method == 'POST':
         project.delete()
         return redirect('home')
+
     context = {'obj': project}
+    return render(request, 'base/delete.html', context)
+
+
+@login_required(login_url='/login')
+def delete_message(request, pk):
+    comment = Message.objects.get(id=pk)
+
+    if request.method == 'POST':
+        comment.delete()
+        return redirect('home')
+
+    context = {'obj': comment}
     return render(request, 'base/delete.html', context)
