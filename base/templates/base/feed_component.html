@@ -1,0 +1,12 @@
+{% for project in projects %}
+    <div>
+        {% if request.user == project.host %}
+            <a href="{% url 'update-project' project.id %}">Edit</a>
+            <a href="{% url 'delete-project' project.id %}">Delete</a>
+        {% endif %}
+        <a href="{% url 'user-profile' project.host.id %}">@{{ project.host.username }}</a>
+        <h5>{{ project.id }} -- <a href="{% url 'project' project.id %}">{{ project.name }}</a></h5>
+        <small>{{ project.topic.name }}</small>
+        <hr>
+    </div>
+{% endfor %}
