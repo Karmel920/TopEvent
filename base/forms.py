@@ -6,3 +6,4 @@ class ProjectForm(ModelForm):
     class Meta:
         model = Project
         fields = '__all__'
+        exclude = ['host', 'participants']
