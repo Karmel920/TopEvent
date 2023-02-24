@@ -64,13 +64,15 @@ def home(request):
 
     topics = Topic.objects.all()
     project_count = projects.count()
-    context = {'projects': projects, 'topics': topics, 'project_count': project_count}
+    comments = Message.objects.filter(Q(project__topic__name__icontains=q))
+
+    context = {'projects': projects, 'topics': topics, 'project_count': project_count, 'comments': comments}
     return render(request, 'base/home.html', context)
 
 
 def project(request, pk):
     project = Project.objects.get(id=pk)
-    comments = project.message_set.all().order_by('-created')
+    comments = project.message_set.all()
     participants = project.participants.all()
 
     if request.method == 'POST':
@@ -86,6 +88,15 @@ def project(request, pk):
     return render(request, 'base/project.html', context)
 
 
+def user_profile(request, pk):
+    user = User.objects.get(id=pk)
+    projects = user.project_set.all()
+    comments = user.message_set.all()
+    topics = Topic.objects.all()
+    context = {'user': user, 'projects': projects, 'comments': comments, 'topics': topics}
+    return render(request, 'base/profile.html', context)
+
+
 @login_required(login_url='/login')
 def create_project(request):
     form = ProjectForm()
@@ -93,7 +104,9 @@ def create_project(request):
     if request.method == 'POST':
         form = ProjectForm(request.POST)
         if form.is_valid():
-            form.save()
+            project = form.save(commit=False)
+            project.host = request.user
+            project.save()
             return redirect('home')
 
     context = {'form': form}
@@ -133,7 +146,7 @@ def delete_message(request, pk):
 
     if request.method == 'POST':
         comment.delete()
-        return redirect('home')
+        return redirect('project', pk=comment.project.id)
 
     context = {'obj': comment}
     return render(request, 'base/delete.html', context)
