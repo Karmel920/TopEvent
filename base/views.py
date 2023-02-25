@@ -62,11 +62,12 @@ def home(request):
         Q(description__icontains=q)
     )
 
+    all_projects = Project.objects.all()
     topics = Topic.objects.all()
     project_count = projects.count()
     comments = Message.objects.filter(Q(project__topic__name__icontains=q))
 
-    context = {'projects': projects, 'topics': topics, 'project_count': project_count, 'comments': comments}
+    context = {'projects': projects, 'topics': topics, 'project_count': project_count, 'comments': comments, 'all_projects': all_projects}
     return render(request, 'base/home.html', context)
 
 
@@ -91,25 +92,31 @@ def project(request, pk):
 def user_profile(request, pk):
     user = User.objects.get(id=pk)
     projects = user.project_set.all()
+    all_projects = Project.objects.all()
     comments = user.message_set.all()
     topics = Topic.objects.all()
-    context = {'user': user, 'projects': projects, 'comments': comments, 'topics': topics}
+    context = {'user': user, 'projects': projects, 'comments': comments, 'topics': topics, 'all_projects': all_projects}
     return render(request, 'base/profile.html', context)
 
 
 @login_required(login_url='/login')
 def create_project(request):
     form = ProjectForm()
+    topics = Topic.objects.all()
 
     if request.method == 'POST':
-        form = ProjectForm(request.POST)
-        if form.is_valid():
-            project = form.save(commit=False)
-            project.host = request.user
-            project.save()
-            return redirect('home')
+        topic_name = request.POST.get('topic')
+        topic, created = Topic.objects.get_or_create(name=topic_name)
 
-    context = {'form': form}
+        Project.objects.create(
+            host=request.user,
+            topic=topic,
+            name=request.POST.get('name'),
+            description=request.POST.get('description')
+        )
+        return redirect('home')
+
+    context = {'form': form, 'topics': topics}
     return render(request, 'base/project_form.html', context)
 
 
@@ -117,14 +124,18 @@ def create_project(request):
 def update_project(request, pk):
     project = Project.objects.get(id=pk)
     form = ProjectForm(instance=project)
+    topics = Topic.objects.all()
 
     if request.method == 'POST':
-        form = ProjectForm(request.POST, instance=project)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
+        topic_name = request.POST.get('topic')
+        topic, created = Topic.objects.get_or_create(name=topic_name)
+        project.name = request.POST.get('name')
+        project.topic = topic
+        project.description = request.POST.get('description')
+        project.save()
+        return redirect('home')
 
-    context = {'form': form}
+    context = {'form': form, 'topics': topics, 'project': project}
     return render(request, 'base/project_form.html', context)
 
 
@@ -150,3 +161,8 @@ def delete_message(request, pk):
 
     context = {'obj': comment}
     return render(request, 'base/delete.html', context)
+
+
+@login_required(login_url='/login')
+def update_user(request):
+    return render(request, 'base/update-user.html')
