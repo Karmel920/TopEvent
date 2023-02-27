@@ -2,6 +2,19 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class UserDetails(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    name = models.CharField(max_length=200, null=True)
+    email = models.EmailField(unique=True, null=True)
+    bio = models.TextField(null=True)
+    avatar = models.ImageField(null=True, default="avatar.svg")
+
+    REQUIRED_FIELDS = []
+
+    def __str__(self):
+        return f"{self.user.username} details"
+
+
 class Topic(models.Model):
     name = models.CharField(max_length=200)
 
