@@ -1,0 +1,26 @@
+<div class="activities">
+    <div class="activities__header">
+        <h2>Recent Activities</h2>
+    </div>
+    {% for comment in comments %}
+    <div class="activities__box">
+        <div class="activities__boxHeader roomListRoom__header">
+            <a href="{% url 'user-profile' comment.user.id %}" class="roomListRoom__author">
+                <div class="avatar avatar--small">
+                    <img src="{{ comment.user.userdetails.avatar.url }}"/>
+                </div>
+                <p>
+                    @{{ comment.user }}
+                    <span>{{ comment.created|timesince }}</span>
+                </p>
+            </a>
+        </div>
+        <div class="activities__boxContent">
+            <p>commented on “<a href="{% url 'project' comment.project.id %}">{{ comment.project }}</a>”</p>
+            <div class="activities__boxRoomContent">
+                {{ comment }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
