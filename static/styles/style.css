@@ -422,6 +422,7 @@ a {
 /*========== Layout Box ==========*/
 
 .layout__box {
+  height: 80%;
   width: 90%;
   max-width: 48rem;
   min-height: 40rem;
@@ -432,7 +433,7 @@ a {
   background-color: var(--color-dark);
   border-radius: 1rem;
   box-shadow: 1px 1px 6px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  overflow: auto;
 }
 
 .layout__boxHeader {
